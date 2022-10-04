@@ -1,0 +1,59 @@
+/* Apex class that contains a public static method for each Account record, before saving, ensure that the ShippingState field has the same value as the BillingState field */
+
+public class AccountTriggerHandler {
+    public static void CreateAccounts(List<Account> aList){
+        for(Account acc: aList){
+            if(acc.ShippingState != acc.BillingState){
+                acc.ShippingState=acc.BillingState;
+            }
+        }
+    }
+
+}
+
+
+
+
+
+/* Create an Apex Trigger that calls the AccountTriggerHandler.CreateAccounts() method with the collection of new records */ 
+
+trigger AccountTrigger on Account (before insert) {
+    if(Trigger.isBefore && Trigger.isInsert)
+    {
+        AccountTriggerHandler.CreateAccounts(trigger.new);
+    }
+
+}
+
+
+
+
+/* Create a test class, Your test class must insert 200 Account records with a BillingState of CA
+After the insert, test to ensure that all 200 records have a ShippingState of CA */
+
+@isTest
+public class AccountTriggerTest {
+    @Testsetup public static void Tester(){
+        List<Account> accList = new List<Account>();
+        for(integer i=1; i<=200; i++)
+        {
+            Account acc1 = new Account(Name='test'+i, BillingState ='CA');
+            accList.add(acc1);
+        }
+        
+        insert accList;
+        
+        
+    }
+     
+    @isTest public static void TestInsertRecords()
+    {
+        
+        for(Account acc: [select ShippingState from Account where Createddate = today])
+        {
+            System.assertEquals('CA',acc.ShippingState);   
+        }
+    }
+}
+
+
